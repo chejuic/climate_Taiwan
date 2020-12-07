@@ -7,13 +7,18 @@
 # 2.利用氣象資料計算WBGT
 # 3.繪製WBGT地理分布圖
 
-if(!"reticulate"%in%installed.packages()) installed.packages("reticulate")
-if(!"raster"%in%installed.packages()) installed.packages("raster")
-if(!"ncdf4"%in%installed.packages()) installed.packages("ncdf4")
-if(!"lubridate"%in%installed.packages()) installed.packages("lubridate")
-if(!"sp"%in%installed.packages()) installed.packages("sp")
-if(!"sf"%in%installed.packages()) installed.packages("sf")
-if(!"rgdal"%in%installed.packages()) installed.packages("rgdal")
+sessionInfo()
+# R version 4.0.3 (2020-10-10)
+# Platform: x86_64-w64-mingw32/x64 (64-bit)
+# Running under: Windows 10 x64 (build 18363)
+
+if(!"reticulate"%in%installed.packages()) install.packages("reticulate")
+if(!"raster"%in%installed.packages()) install.packages("raster")
+if(!"ncdf4"%in%installed.packages()) install.packages("ncdf4")
+if(!"lubridate"%in%installed.packages()) install.packages("lubridate")
+if(!"sp"%in%installed.packages()) install.packages("sp")
+if(!"sf"%in%installed.packages()) install.packages("sf")
+if(!"rgdal"%in%installed.packages()) install.packages("rgdal")
 
 library(reticulate) # for using python in R code
 library(raster) # for processing of raster data
@@ -23,6 +28,23 @@ library(lubridate) # for dealing with Date data
 library(sp)  
 library(sf)  
 library(rgdal)
+
+# 如果不是使用Rtools40和R 4.0.3才需進行下列步驟
+# install HeatStress package for wbgt calculation
+# 1. 移除Rtools35，改安裝Rtools40
+# 2. 重新安裝R 4.0.3和RStudio-1.3.1093
+# 3. run下面這兩行
+writeLines('PATH="${RTOOLS40_HOME}\\usr\\bin;${PATH}"', con = "~/.Renviron")
+update.packages(ask=FALSE, checkBuilt=TRUE)
+# .............................................
+
+# 開始安裝anacv/HeatStress
+if(!"remotes"%in%installed.packages()) install.packages("remotes")
+remotes::install_github("anacv/HeatStress" , force = T)
+
+#匯入計算室外WBGT公式(Liljegren)的package
+#匯入HeatStress package
+library(HeatStress)
 
 # 設定工作目錄
 setwd("B:/r/version control/temperature data/demo")
@@ -46,6 +68,8 @@ getwd()
 # https://docs.anaconda.com/anaconda/install/windows/
 # 才能安裝package
 use_python("C:/Users/HY/anaconda3/envs/r-reticulate/python.exe")
+
+py_config()
 
 # 1.2 安裝 python cdsapi package #####
 py_install(
@@ -157,25 +181,7 @@ ResultUrl <- c$retrieve(
 
 # 2.利用氣象資料計算WBGT #####
 
-# 2.1 匯入計算室外WBGT公式(Liljegren)的package ####
-
-# 如果不是使用Rtools40和R 4.0.3才需進行下列步驟
-# install HeatStress package for wbgt calculation
-# 1. 移除Rtools35，改安裝Rtools40
-# 2. 重新安裝R 4.0.3和RStudio-1.3.1093
-# 3. run下面這兩行
-writeLines('PATH="${RTOOLS40_HOME}\\usr\\bin;${PATH}"', con = "~/.Renviron")
-update.packages(ask=FALSE, checkBuilt=TRUE)
-# .............................................
-
-# 開始安裝anacv/HeatStress
-if(!"remotes"%in%installed.packages()) installed.packages("remotes")
-remotes::install_github("anacv/HeatStress" , force = T)
-
-#匯入HeatStress package
-library(HeatStress)
-
-# 2.2 匯入ERA5資料 ####
+# 2.1 匯入ERA5資料 ####
 
 # ERA5資料檔案路徑
 ncfilename <- paste0(getwd(),"/ERA5/ERA5_2019_wbgt_var_TW_.nc")
@@ -218,7 +224,7 @@ dewp <- d2m - 273.15
 time <- as.numeric(time)
 dates <- as_datetime(time * 60 * 60, origin = as.Date("1900-01-01", tz = "UTC"))
 
-# 2.3 計算室外WBGT ####
+# 2.2 計算室外WBGT ####
 
 # 建立WBGT_data資料夾輸出計算完的WBGT資料
 # dir.create("B:/r/version control/temperature data/WBGT_data")
@@ -250,7 +256,7 @@ test <- temp
         message(x, " , ", y , " , ", t)
       }
     }
-    name <- paste0("ERA5_2019_", t)
+    name <- paste0("ERA5_TW2019_", t)
     filename <- paste0(getwd(),"/WBGT_data/", name, ".RData")
     # 將計算完的WBGT資料指定特定名稱
     assign(name, test[, , t])
